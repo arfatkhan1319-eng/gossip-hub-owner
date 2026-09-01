@@ -1,19 +1,6 @@
 <!doctype html>
-<html lang="en">
 
-<head>
-
-<meta charset="utf-8">
-
-<meta
-name="viewport"
-content="width=device-width,initial-scale=1"
->
-
-<title>GOSSIP HUB • Owner Orders</title>
-
-
-<style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GOSSIP HUB • Owner Orders</title><style>
 
 *{
 box-sizing:border-box;
@@ -25,7 +12,6 @@ font-family:Arial,sans-serif;
 background:#0f0f0f;
 color:#fff;
 }
-
 
 /* HEADER */
 
@@ -47,6 +33,51 @@ color:#999;
 margin-top:7px;
 }
 
+/* SOUND BUTTON */
+
+.soundBox{
+text-align:center;
+padding:12px 15px;
+background:#111;
+border-bottom:1px solid #292929;
+}
+
+.soundBtn{
+border:0;
+border-radius:20px;
+padding:9px 16px;
+background:#292929;
+color:#fff;
+font-size:13px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.soundBtn.enabled{
+background:#22c55e;
+}
+
+/* NEW ORDER POPUP */
+
+#notification{
+position:fixed;
+top:15px;
+left:50%;
+transform:translateX(-50%) translateY(-120px);
+background:#e63946;
+color:#fff;
+padding:15px 22px;
+border-radius:14px;
+font-weight:bold;
+font-size:15px;
+z-index:9999;
+box-shadow:0 8px 30px rgba(0,0,0,.5);
+transition:.35s ease;
+}
+
+#notification.show{
+transform:translateX(-50%) translateY(0);
+}
 
 /* ORDERS */
 
@@ -55,7 +86,6 @@ max-width:650px;
 margin:auto;
 padding:18px;
 }
-
 
 /* ORDER CARD */
 
@@ -68,7 +98,6 @@ padding:18px;
 margin-bottom:16px;
 box-shadow:0 5px 20px rgba(0,0,0,.25);
 }
-
 
 /* TOP */
 
@@ -89,7 +118,6 @@ color:#888;
 font-size:12px;
 }
 
-
 /* ITEMS */
 
 .item{
@@ -107,7 +135,6 @@ font-weight:600;
 color:#bbb;
 }
 
-
 /* TOTAL */
 
 .total{
@@ -117,7 +144,6 @@ font-size:20px;
 font-weight:bold;
 margin-top:16px;
 }
-
 
 /* BUTTON */
 
@@ -138,7 +164,6 @@ cursor:pointer;
 opacity:.9;
 }
 
-
 /* EMPTY */
 
 .empty{
@@ -148,8 +173,7 @@ color:#777;
 font-size:16px;
 }
 
-
-/* NEW ORDER */
+/* NEW BADGE */
 
 .newBadge{
 display:inline-block;
@@ -161,7 +185,6 @@ color:#ff7b85;
 font-size:11px;
 font-weight:bold;
 }
-
 
 /* MOBILE */
 
@@ -178,45 +201,24 @@ gap:10px;
 
 }
 
-</style>
-
-</head>
-
-
-<body>
-
-
-<header>
-
-<div class="logo">
+</style></head><body><!-- NEW ORDER NOTIFICATION --><div id="notification">
+🔔 NEW ORDER RECEIVED!
+</div><header><div class="logo">
 🍴 GOSSIP HUB
-</div>
-
-<div class="subtitle">
+</div><div class="subtitle">
 Customer Orders
-</div>
+</div></header><!-- SOUND ENABLE --><div class="soundBox"><button
+id="soundButton"
+class="soundBtn"
+onclick="enableSound()"
 
-</header>
+«»
 
+🔊 Enable Order Sound
 
-<div id="orders">
-
-<div class="empty">
+</button></div><div id="orders"><div class="empty">
 Loading orders...
-</div>
-
-</div>
-
-
-<!-- FIREBASE -->
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-
-<script>
-
+</div></div><!-- FIREBASE --><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script>
 
 /* =========================
    FIREBASE CONFIG
@@ -251,6 +253,188 @@ const db = firebase.firestore();
 
 
 /* =========================
+   SOUND SYSTEM
+========================= */
+
+let audioContext = null;
+
+let soundEnabled = false;
+
+
+/* ENABLE SOUND */
+
+function enableSound(){
+
+try{
+
+audioContext =
+new (
+window.AudioContext ||
+window.webkitAudioContext
+)();
+
+audioContext.resume();
+
+soundEnabled = true;
+
+const button =
+document.getElementById("soundButton");
+
+button.innerHTML =
+"🔊 Order Sound Enabled";
+
+button.classList.add("enabled");
+
+
+/* Test sound */
+
+playTing();
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"Sound could not be enabled."
+);
+
+}
+
+}
+
+
+/* TING SOUND */
+
+function playTing(){
+
+if(!soundEnabled || !audioContext){
+return;
+}
+
+try{
+
+const oscillator =
+audioContext.createOscillator();
+
+const gain =
+audioContext.createGain();
+
+
+oscillator.type = "sine";
+
+oscillator.frequency.setValueAtTime(
+880,
+audioContext.currentTime
+);
+
+oscillator.frequency.exponentialRampToValueAtTime(
+1400,
+audioContext.currentTime + 0.12
+);
+
+
+gain.gain.setValueAtTime(
+0.0001,
+audioContext.currentTime
+);
+
+gain.gain.exponentialRampToValueAtTime(
+0.35,
+audioContext.currentTime + 0.02
+);
+
+gain.gain.exponentialRampToValueAtTime(
+0.0001,
+audioContext.currentTime + 0.45
+);
+
+
+oscillator.connect(gain);
+
+gain.connect(audioContext.destination);
+
+
+oscillator.start();
+
+oscillator.stop(
+audioContext.currentTime + 0.45
+);
+
+}catch(error){
+
+console.error(error);
+
+}
+
+}
+
+
+/* =========================
+   POPUP NOTIFICATION
+========================= */
+
+function showNotification(){
+
+const notification =
+document.getElementById("notification");
+
+
+notification.classList.add("show");
+
+
+setTimeout(()=>{
+
+notification.classList.remove("show");
+
+},4000);
+
+}
+
+
+/* =========================
+   BROWSER NOTIFICATION
+========================= */
+
+function browserNotification(){
+
+if(
+"Notification" in window &&
+Notification.permission === "granted"
+){
+
+new Notification(
+"GOSSIP HUB 🔔",
+{
+body:"New customer order received!",
+icon:"https://cdn-icons-png.flaticon.com/512/3595/3595455.png"
+}
+);
+
+}
+
+}
+
+
+/* ASK NOTIFICATION PERMISSION */
+
+if(
+"Notification" in window &&
+Notification.permission === "default"
+){
+
+Notification.requestPermission();
+
+}
+
+
+/* =========================
+   TRACK FIRST LOAD
+========================= */
+
+let firstLoad = true;
+
+
+/* =========================
    LISTEN FOR ORDERS
 ========================= */
 
@@ -262,12 +446,14 @@ snapshot => {
 
 let html="";
 
+let newOrderDetected = false;
+
 
 snapshot.forEach(doc=>{
 
-const order=doc.data();
+const order = doc.data();
 
-const id=doc.id;
+const id = doc.id;
 
 
 let time="";
@@ -384,6 +570,8 @@ onclick="orderReceived('${id}')"
 });
 
 
+/* DISPLAY ORDERS */
+
 if(!html){
 
 html=`
@@ -404,6 +592,50 @@ No new orders
 
 
 document.getElementById("orders").innerHTML=html;
+
+
+/* =========================
+   NEW ORDER DETECTION
+========================= */
+
+if(!firstLoad){
+
+snapshot.docChanges().forEach(change=>{
+
+if(
+change.type === "added" &&
+change.doc.data().status !== "completed"
+){
+
+newOrderDetected = true;
+
+}
+
+});
+
+
+if(newOrderDetected){
+
+/* SOUND */
+
+playTing();
+
+
+/* SCREEN POPUP */
+
+showNotification();
+
+
+/* PHONE NOTIFICATION */
+
+browserNotification();
+
+}
+
+}
+
+
+firstLoad = false;
 
 },
 
@@ -461,9 +693,4 @@ alert(
 
 }
 
-</script>
-
-
-</body>
-
-</html>
+</script></body></html>
