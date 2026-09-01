@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1"
+>
+
+<title>GOSSIP HUB • Owner Orders</title>
+
+
+<style>
+
+*{
+box-sizing:border-box;
+}
+
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:#0f0f0f;
+color:#fff;
+}
+
+
+/* HEADER */
+
+header{
+background:linear-gradient(145deg,#191919,#0b0b0b);
+padding:22px 18px;
+text-align:center;
+border-bottom:1px solid #292929;
+}
+
+.logo{
+font-size:27px;
+font-weight:900;
+letter-spacing:2px;
+}
+
+.subtitle{
+color:#999;
+margin-top:7px;
+}
+
+
+/* ORDERS */
+
+#orders{
+max-width:650px;
+margin:auto;
+padding:18px;
+}
+
+
+/* ORDER CARD */
+
+.order{
+background:#181818;
+border:1px solid #292929;
+border-left:5px solid #e63946;
+border-radius:16px;
+padding:18px;
+margin-bottom:16px;
+box-shadow:0 5px 20px rgba(0,0,0,.25);
+}
+
+
+/* TOP */
+
+.orderTop{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:15px;
+}
+
+.orderTitle{
+font-size:20px;
+font-weight:bold;
+}
+
+.time{
+color:#888;
+font-size:12px;
+}
+
+
+/* ITEMS */
+
+.item{
+display:flex;
+justify-content:space-between;
+padding:10px 0;
+border-bottom:1px solid #292929;
+}
+
+.itemName{
+font-weight:600;
+}
+
+.itemPrice{
+color:#bbb;
+}
+
+
+/* TOTAL */
+
+.total{
+display:flex;
+justify-content:space-between;
+font-size:20px;
+font-weight:bold;
+margin-top:16px;
+}
+
+
+/* BUTTON */
+
+.received{
+width:100%;
+margin-top:18px;
+padding:13px;
+border:0;
+border-radius:10px;
+background:#22c55e;
+color:#fff;
+font-size:15px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.received:hover{
+opacity:.9;
+}
+
+
+/* EMPTY */
+
+.empty{
+text-align:center;
+padding:70px 20px;
+color:#777;
+font-size:16px;
+}
+
+
+/* NEW ORDER */
+
+.newBadge{
+display:inline-block;
+margin-top:6px;
+padding:5px 9px;
+border-radius:10px;
+background:#3b171b;
+color:#ff7b85;
+font-size:11px;
+font-weight:bold;
+}
+
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+.logo{
+font-size:23px;
+}
+
+.orderTop{
+align-items:flex-start;
+gap:10px;
+}
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+<div class="logo">
+🍴 GOSSIP HUB
+</div>
+
+<div class="subtitle">
+Customer Orders
+</div>
+
+</header>
+
+
+<div id="orders">
+
+<div class="empty">
+Loading orders...
+</div>
+
+</div>
+
+
+<!-- FIREBASE -->
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+
+<script>
+
+
+/* =========================
+   FIREBASE CONFIG
+========================= */
+
+const firebaseConfig = {
+
+apiKey:
+"AIzaSyCN-_IvxWyqgV7zNjzbdGDSL8GWZYv_qA",
+
+authDomain:
+"gossip-hub-c7415.firebaseapp.com",
+
+projectId:
+"gossip-hub-c7415",
+
+storageBucket:
+"gossip-hub-c7415.firebasestorage.app",
+
+messagingSenderId:
+"344171350486",
+
+appId:
+"1:344171350486:web:4fdc3289501841b7a8fc77"
+
+};
+
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+
+/* =========================
+   LISTEN FOR ORDERS
+========================= */
+
+db.collection("orders")
+.orderBy("createdAt","desc")
+.onSnapshot(
+
+snapshot => {
+
+let html="";
+
+
+snapshot.forEach(doc=>{
+
+const order=doc.data();
+
+const id=doc.id;
+
+
+let time="";
+
+
+if(order.createdAt){
+
+time =
+order.createdAt
+.toDate()
+.toLocaleString(
+[],
+{
+day:"2-digit",
+month:"short",
+hour:"2-digit",
+minute:"2-digit"
+}
+);
+
+}
+
+
+/* ITEMS */
+
+let items="";
+
+
+if(order.items){
+
+order.items.forEach(item=>{
+
+items += `
+
+<div class="item">
+
+<span class="itemName">
+${item.name}
+</span>
+
+<span class="itemPrice">
+₹${item.price}
+</span>
+
+</div>
+
+`;
+
+});
+
+}
+
+
+/* ONLY NEW ORDERS */
+
+if(order.status !== "completed"){
+
+html += `
+
+<div class="order">
+
+<div class="orderTop">
+
+<div>
+
+<div class="orderTitle">
+🔔 New Order
+</div>
+
+<div class="newBadge">
+NEW
+</div>
+
+</div>
+
+<div class="time">
+${time}
+</div>
+
+</div>
+
+
+${items}
+
+
+<div class="total">
+
+<span>
+Total
+</span>
+
+<span>
+₹${order.total}
+</span>
+
+</div>
+
+
+<button
+class="received"
+onclick="orderReceived('${id}')"
+>
+
+✓ ORDER RECEIVED
+
+</button>
+
+</div>
+
+`;
+
+}
+
+});
+
+
+if(!html){
+
+html=`
+
+<div class="empty">
+
+🛒
+
+<br><br>
+
+No new orders
+
+</div>
+
+`;
+
+}
+
+
+document.getElementById("orders").innerHTML=html;
+
+},
+
+
+error => {
+
+console.error(error);
+
+document.getElementById("orders").innerHTML=`
+
+<div class="empty">
+
+❌ Unable to load orders.
+
+<br><br>
+
+Check Firebase connection.
+
+</div>
+
+`;
+
+}
+
+);
+
+
+/* =========================
+   ORDER RECEIVED
+========================= */
+
+function orderReceived(id){
+
+db.collection("orders")
+.doc(id)
+.update({
+
+status:"completed"
+
+})
+.then(()=>{
+
+console.log("Order completed");
+
+})
+.catch(error=>{
+
+console.error(error);
+
+alert(
+"Could not update order."
+);
+
+});
+
+}
+
+</script>
+
+
+</body>
+
+</html>
